@@ -1,4 +1,7 @@
+#include "editablemodel.hpp"
+
 #include <QMainWindow>
+#include <QSqlDatabase>
 
 #include <memory>
 
@@ -24,4 +27,5 @@ public:
 
 private:
     std::unique_ptr<Ui::MainWindow> _ui;
+    EditableModel* _model{nullptr};
 };

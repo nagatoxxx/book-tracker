@@ -3,6 +3,7 @@
 #include <QObject>
 #include <QTableView>
 
+// event filter class for books table view in main window
 class TableViewEventFilter : public QObject
 {
     Q_OBJECT

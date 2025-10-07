@@ -26,7 +26,7 @@ EditableModel::~EditableModel() /* override */ = default;
 /* [[nodiscard]] */ int EditableModel::columnCount(const QModelIndex& parent /* = QModelIndex() */) const /* override  */
 {
     Q_UNUSED(parent);
-    return static_cast<int>(_displayed_headers.size());
+    return static_cast<int>(_displayed_headers.size()); // columns in header
 }
 
 /* [[nodiscard]] */ QVariant EditableModel::data(const QModelIndex& index, int role) const /* override  */
@@ -59,25 +59,30 @@ EditableModel::~EditableModel() /* override */ = default;
                                                 const QVariant& value [[maybe_unused]],
                                                 int role [[maybe_unused]]) /* override  */
 {
-    return false;
+    return false; // prevents editing of values
+                  // TODO check this
 }
 
 void EditableModel::loadData()
 {
+    // clear existance data
     _data.clear();
     _ids.clear();
 
     QSqlQuery query;
+
+    // getting all the data from the tables, combining them into one table
     auto res = query.exec(QString::fromStdString(std::string(BooksDatabase::GET_ALL)));
 
     if (!res) {
         throw std::runtime_error("query failed");
     }
 
+    // process result line by line, add rows to data vector
     while (query.next()) {
         _ids.push_back(query.value(0).toInt());
         QVector<QVariant> row;
-        row.reserve(6);
+        row.reserve(BooksDatabase::COLUMNS_IN_JOINED - 1);
         for (int i = 0; i < BooksDatabase::COLUMNS_IN_JOINED - 1; ++i) {
             row.emplace_back(query.value(i));
         }

@@ -3,6 +3,9 @@
 #include <QAbstractTableModel>
 #include <QSqlDatabase>
 
+// TODO rename
+//
+// implementation of model with books, provides custom columns names
 class EditableModel : public QAbstractTableModel
 {
     Q_OBJECT
@@ -30,6 +33,6 @@ public:
 private:
     QSqlDatabase _database;
     QStringList _displayed_headers;
-    QVector<QVector<QVariant>> _data; // данные (строки со значениями)
-    QVector<int> _ids;                // текущие айди полей в данных
+    QVector<QVector<QVariant>> _data;
+    QVector<int> _ids; // id of rows retrieved during the last access to the database
 };
