@@ -1,0 +1,20 @@
+[
+{
+  "directory": "/home/vlad/code/study/db/build",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/vlad/code/study/db/build/books_autogen/include -I/home/vlad/code/study/db/src -isystem /usr/include/qt6/QtWidgets -isystem /usr/include/qt6 -isystem /usr/include/qt6/QtCore -isystem /usr/lib64/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtSql -std=gnu++20 -g -Wall -Wpedantic -Wextra -mno-direct-extern-access -o CMakeFiles/books.dir/books_autogen/mocs_compilation.cpp.o -c /home/vlad/code/study/db/build/books_autogen/mocs_compilation.cpp",
+  "file": "/home/vlad/code/study/db/build/books_autogen/mocs_compilation.cpp",
+  "output": "CMakeFiles/books.dir/books_autogen/mocs_compilation.cpp.o"
+},
+{
+  "directory": "/home/vlad/code/study/db/build",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/vlad/code/study/db/build/books_autogen/include -I/home/vlad/code/study/db/src -isystem /usr/include/qt6/QtWidgets -isystem /usr/include/qt6 -isystem /usr/include/qt6/QtCore -isystem /usr/lib64/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtSql -std=gnu++20 -g -Wall -Wpedantic -Wextra -mno-direct-extern-access -o CMakeFiles/books.dir/src/main.cpp.o -c /home/vlad/code/study/db/src/main.cpp",
+  "file": "/home/vlad/code/study/db/src/main.cpp",
+  "output": "CMakeFiles/books.dir/src/main.cpp.o"
+},
+{
+  "directory": "/home/vlad/code/study/db/build",
+  "command": "/usr/bin/c++ -DQT_CORE_LIB -DQT_GUI_LIB -DQT_NO_DEBUG -DQT_SQL_LIB -DQT_WIDGETS_LIB -I/home/vlad/code/study/db/build/books_autogen/include -I/home/vlad/code/study/db/src -isystem /usr/include/qt6/QtWidgets -isystem /usr/include/qt6 -isystem /usr/include/qt6/QtCore -isystem /usr/lib64/qt6/mkspecs/linux-g++ -isystem /usr/include/qt6/QtGui -isystem /usr/include/qt6/QtSql -std=gnu++20 -g -Wall -Wpedantic -Wextra -mno-direct-extern-access -o CMakeFiles/books.dir/src/mainwindow.cpp.o -c /home/vlad/code/study/db/src/mainwindow.cpp",
+  "file": "/home/vlad/code/study/db/src/mainwindow.cpp",
+  "output": "CMakeFiles/books.dir/src/mainwindow.cpp.o"
+}
+]
