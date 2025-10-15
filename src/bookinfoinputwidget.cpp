@@ -22,7 +22,7 @@
 
 BookInfoInputWidget::~BookInfoInputWidget() /* override */ = default;
 
-void BookInfoInputWidget::setPriorities(std::shared_ptr<std::vector<bd::Priority>> priorities)
+void BookInfoInputWidget::setPriorities(const std::shared_ptr<std::vector<bd::Priority>>& priorities)
 {
     _ui->cb_priority->clear();
 
@@ -34,23 +34,31 @@ void BookInfoInputWidget::setPriorities(std::shared_ptr<std::vector<bd::Priority
                           }); // insert string with sql row id as user data
 }
 
-void BookInfoInputWidget::setAvaibilities(std::shared_ptr<std::vector<bd::Avaibility>> avaibilities) {}
-
-void BookInfoInputWidget::setGenres(std::shared_ptr<std::vector<bd::Genre>> genres)
+void BookInfoInputWidget::setAvaibilities(const std::shared_ptr<std::vector<bd::Avaibility>>& avaibilities)
 {
-    // // _genres = genres;
-    //
-    // // update genres autocompletion base
-    // QStringList list;
-    // for (const auto& genre : *genres) {
-    //     list.append(QString::fromStdString(genre.name));
-    // }
-    //
-    // _genres_string_model->setStringList(list);
-    // _genres_completer->setModel(_genres_string_model);
+    _ui->cb_avaibility->clear();
+
+    auto idx{0};
+    std::ranges::for_each(*avaibilities,
+                          [this, &idx](const bd::Avaibility& avaibility) -> void
+                          {
+                              _ui->cb_avaibility->insertItem(idx++, QString::fromStdString(avaibility.name), avaibility.id);
+                          }); // insert string with sql row id as user data
 }
 
-void BookInfoInputWidget::setAuthors(std::shared_ptr<std::vector<bd::Author>> authors) {}
+void BookInfoInputWidget::setGenres(const std::shared_ptr<std::vector<bd::Genre>>& genres)
+{
+    // update genres autocompletion base
+    QStringList list;
+
+    std::ranges::for_each(*genres,
+                          [&list](const bd::Genre& genre) -> void { list.append(QString::fromStdString(genre.name)); });
+
+    _genres_string_model->setStringList(list);
+    _genres_completer->setModel(_genres_string_model);
+}
+
+void BookInfoInputWidget::setAuthors(const std::shared_ptr<std::vector<bd::Author>>& authors) {}
 
 void BookInfoInputWidget::onSaveButtonClicked()
 {
@@ -63,4 +71,6 @@ void BookInfoInputWidget::onSaveButtonClicked()
 
     emit infoSaved(
         bd::Book{.id = -1, .title = std::move(title), .author = 1, .avaibility = avaibility, .priority = priority, .genres = {}});
+
+    close();
 }

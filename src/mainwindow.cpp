@@ -4,7 +4,6 @@
 #include "query.hpp"
 #include "ui_mainwindow.h"
 #include "util.hpp"
-#include "vieweventfilter.hpp"
 
 #include <QSqlError>
 #include <QSqlQuery>
@@ -39,7 +38,7 @@ void MainWindow::addBook()
 
     // set genres, priority, avaibility to autocompletion
     widget->setPriorities(std::make_shared<std::vector<bd::Priority>>(_model->priorities()));
-    widget->setGenres(std::make_shared<std::vector<bd::Genre>>(_model->genres()));
+    widget->setAvaibilities(std::make_shared<std::vector<bd::Avaibility>>(_model->avaibilities()));
     widget->setAuthors(std::make_shared<std::vector<bd::Author>>(_model->authors()));
     widget->setGenres(std::make_shared<std::vector<bd::Genre>>(_model->genres()));
 

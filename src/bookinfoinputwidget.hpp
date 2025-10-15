@@ -32,10 +32,10 @@ public:
 
     ~BookInfoInputWidget() override;
 
-    void setPriorities(std::shared_ptr<std::vector<bd::Priority>> priorities);
-    void setAvaibilities(std::shared_ptr<std::vector<bd::Avaibility>> avaibilities);
-    void setGenres(std::shared_ptr<std::vector<bd::Genre>> genres);
-    void setAuthors(std::shared_ptr<std::vector<bd::Author>> authors);
+    void setPriorities(const std::shared_ptr<std::vector<bd::Priority>>& priorities);
+    void setAvaibilities(const std::shared_ptr<std::vector<bd::Avaibility>>& avaibilities);
+    void setGenres(const std::shared_ptr<std::vector<bd::Genre>>& genres);
+    void setAuthors(const std::shared_ptr<std::vector<bd::Author>>& authors);
 
 signals:
     void infoSaved(const bd::Book&);
