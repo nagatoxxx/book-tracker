@@ -44,8 +44,11 @@ private slots:
     void onSaveButtonClicked();
 
 private:
-    std::unique_ptr<Ui::BookInfoInputWidget> _ui{};
+    std::unique_ptr<Ui::BookInfoInputWidget> _ui{nullptr};
 
     QStringListModel* _genres_string_model{nullptr}; // model to keep genres names
     QCompleter* _genres_completer{nullptr};
+
+    QStringListModel* _authors_string_model{nullptr};
+    QCompleter* _authors_completer{nullptr};
 };

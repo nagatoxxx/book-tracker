@@ -8,14 +8,22 @@
 : QWidget(parent),
   _ui(std::make_unique<Ui::BookInfoInputWidget>()),
   _genres_string_model(new QStringListModel(this)),
-  _genres_completer(new QCompleter(this))
+  _genres_completer(new QCompleter(this)),
+  _authors_string_model(new QStringListModel(this)),
+  _authors_completer(new QCompleter(this))
 {
     _ui->setupUi(this);
 
+    // TODO make custom genres autocompletion
     // setup genres autocompletion
     _genres_completer->setCaseSensitivity(Qt::CaseInsensitive);
     _genres_completer->setCompletionMode(QCompleter::PopupCompletion);
     _ui->le_genres->setCompleter(_genres_completer);
+
+    // setup authors autocompletion
+    _authors_completer->setCaseSensitivity(Qt::CaseInsensitive);
+    _authors_completer->setCompletionMode(QCompleter::PopupCompletion);
+    _ui->le_author->setCompleter(_authors_completer);
 
     QObject::connect(_ui->pb_save, &QPushButton::clicked, this, &BookInfoInputWidget::onSaveButtonClicked);
 }
@@ -54,17 +62,31 @@ void BookInfoInputWidget::setGenres(const std::shared_ptr<std::vector<bd::Genre>
     std::ranges::for_each(*genres,
                           [&list](const bd::Genre& genre) -> void { list.append(QString::fromStdString(genre.name)); });
 
+    // update model
     _genres_string_model->setStringList(list);
     _genres_completer->setModel(_genres_string_model);
 }
 
-void BookInfoInputWidget::setAuthors(const std::shared_ptr<std::vector<bd::Author>>& authors) {}
+void BookInfoInputWidget::setAuthors(const std::shared_ptr<std::vector<bd::Author>>& authors)
+{
+    // update authors autocompletion base
+    QStringList list;
+
+    std::ranges::for_each(*authors,
+                          [&list](const bd::Author& genre) -> void { list.append(QString::fromStdString(genre.name)); });
+
+    // update model
+    _authors_string_model->setStringList(list);
+    _authors_completer->setModel(_authors_string_model);
+}
 
 void BookInfoInputWidget::onSaveButtonClicked()
 {
     // get information from gui form
     auto title = _ui->le_title->text().toStdString();
-    // auto author = _ui->le_author->text().toStdString();
+
+    auto author = _ui->le_author->text().toStdString();
+
     auto priority = _ui->cb_priority->currentData().toInt();
     auto avaibility = _ui->cb_priority->currentData().toInt();
     // auto genres = _ui->le_genres->text().toStdString();
