@@ -1,7 +1,8 @@
-#include "editablemodel.hpp"
+#include "booksmodel.hpp"
 
 #include <QMainWindow>
 #include <QSqlDatabase>
+#include <QSqlTableModel>
 
 #include <memory>
 
@@ -25,7 +26,10 @@ public:
 
     ~MainWindow() override;
 
+private slots:
+    void addBook();
+
 private:
-    std::unique_ptr<Ui::MainWindow> _ui;
-    EditableModel* _model{nullptr};
+    std::unique_ptr<Ui::MainWindow> _ui{nullptr};
+    BooksModel* _model{nullptr};
 };

@@ -17,10 +17,13 @@ set(PROJECT_SRC
     src/mainwindow.hpp
     src/mainwindow.cpp
     src/mainwindow.ui
-    src/editablemodel.hpp
-    src/editablemodel.cpp
+    src/booksmodel.hpp
+    src/booksmodel.cpp
     src/vieweventfilter.hpp
     src/vieweventfilter.cpp
+    src/bookinfoinputwidget.ui
+    src/bookinfoinputwidget.hpp
+    src/bookinfoinputwidget.cpp
 
     src/util.hpp
 )
