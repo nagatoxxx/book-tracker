@@ -37,10 +37,10 @@ void MainWindow::addBook()
     widget->show();
 
     // set genres, priority, avaibility to autocompletion
-    widget->setPriorities(std::make_shared<std::vector<bd::Priority>>(_model->priorities()));
-    widget->setAvaibilities(std::make_shared<std::vector<bd::Avaibility>>(_model->avaibilities()));
-    widget->setAuthors(std::make_shared<std::vector<bd::Author>>(_model->authors()));
-    widget->setGenres(std::make_shared<std::vector<bd::Genre>>(_model->genres()));
+    widget->setPriorities(std::make_shared<std::vector<std::string>>(_model->priorities()));
+    widget->setAvaibilities(std::make_shared<std::vector<std::string>>(_model->avaibilities()));
+    widget->setAuthors(std::make_shared<std::vector<std::string>>(_model->authors()));
+    widget->setGenres(std::make_shared<std::vector<std::string>>(_model->genres()));
 
     auto on_info_saved = [this](const BooksDatabase::Book& book) { _model->insertBook(book); };
 

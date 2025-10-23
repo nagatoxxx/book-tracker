@@ -32,10 +32,10 @@ public:
 
     ~BookInfoInputWidget() override;
 
-    void setPriorities(const std::shared_ptr<std::vector<bd::Priority>>& priorities);
-    void setAvaibilities(const std::shared_ptr<std::vector<bd::Avaibility>>& avaibilities);
-    void setGenres(const std::shared_ptr<std::vector<bd::Genre>>& genres);
-    void setAuthors(const std::shared_ptr<std::vector<bd::Author>>& authors);
+    void setPriorities(const std::shared_ptr<std::vector<std::string>>& priorities);
+    void setAvaibilities(const std::shared_ptr<std::vector<std::string>>& avaibilities);
+    void setGenres(const std::shared_ptr<std::vector<std::string>>& genres);
+    void setAuthors(const std::shared_ptr<std::vector<std::string>>& authors);
 
 signals:
     void infoSaved(const bd::Book&);
@@ -45,6 +45,9 @@ private slots:
 
 private:
     std::unique_ptr<Ui::BookInfoInputWidget> _ui{nullptr};
+
+    std::shared_ptr<std::vector<std::string>> _authors{nullptr};
+    std::shared_ptr<std::vector<std::string>> _genres{nullptr};
 
     QStringListModel* _genres_string_model{nullptr}; // model to keep genres names
     QCompleter* _genres_completer{nullptr};

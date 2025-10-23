@@ -33,13 +33,12 @@ public:
     [[nodiscard]] bool setData(const QModelIndex& index, const QVariant& value, int role) override;
 
     // sql query wrappers
-
     void insertBook(const bd::Book& book);
 
-    [[nodiscard]] std::vector<bd::Genre> genres() const;
-    [[nodiscard]] std::vector<bd::Priority> priorities() const;
-    [[nodiscard]] std::vector<bd::Avaibility> avaibilities() const;
-    [[nodiscard]] std::vector<bd::Author> authors() const;
+    [[nodiscard]] std::vector<std::string> genres() const;
+    [[nodiscard]] std::vector<std::string> priorities() const;
+    [[nodiscard]] std::vector<std::string> avaibilities() const;
+    [[nodiscard]] std::vector<std::string> authors() const;
 
 private:
     void loadData(); // update _data with sql select query

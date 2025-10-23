@@ -2,7 +2,13 @@
 
 #include "ui_bookinfoinputwidget.h"
 
+#include <boost/token_functions.hpp>
+#include <boost/tokenizer.hpp>
+
 #include <QCompleter>
+#include <qlogging.h>
+
+#include <algorithm>
 
 /* explicit  */ BookInfoInputWidget::BookInfoInputWidget(QWidget* parent /* = nullptr */)
 : QWidget(parent),
@@ -30,50 +36,54 @@
 
 BookInfoInputWidget::~BookInfoInputWidget() /* override */ = default;
 
-void BookInfoInputWidget::setPriorities(const std::shared_ptr<std::vector<bd::Priority>>& priorities)
+void BookInfoInputWidget::setPriorities(const std::shared_ptr<std::vector<std::string>>& priorities)
 {
     _ui->cb_priority->clear();
 
     auto idx{0};
     std::ranges::for_each(*priorities,
-                          [this, &idx](const bd::Priority& priority) -> void
+                          [this, &idx](const std::string& priority) -> void
                           {
-                              _ui->cb_priority->insertItem(idx++, QString::fromStdString(priority.name), priority.id);
+                              _ui->cb_priority->insertItem(idx++, QString::fromStdString(priority));
                           }); // insert string with sql row id as user data
 }
 
-void BookInfoInputWidget::setAvaibilities(const std::shared_ptr<std::vector<bd::Avaibility>>& avaibilities)
+void BookInfoInputWidget::setAvaibilities(const std::shared_ptr<std::vector<std::string>>& avaibilities)
 {
     _ui->cb_avaibility->clear();
 
     auto idx{0};
     std::ranges::for_each(*avaibilities,
-                          [this, &idx](const bd::Avaibility& avaibility) -> void
+                          [this, &idx](const std::string& avaibility) -> void
                           {
-                              _ui->cb_avaibility->insertItem(idx++, QString::fromStdString(avaibility.name), avaibility.id);
+                              _ui->cb_avaibility->insertItem(idx++, QString::fromStdString(avaibility));
                           }); // insert string with sql row id as user data
 }
 
-void BookInfoInputWidget::setGenres(const std::shared_ptr<std::vector<bd::Genre>>& genres)
+void BookInfoInputWidget::setGenres(const std::shared_ptr<std::vector<std::string>>& genres)
 {
+    _genres = genres;
+
     // update genres autocompletion base
     QStringList list;
 
     std::ranges::for_each(*genres,
-                          [&list](const bd::Genre& genre) -> void { list.append(QString::fromStdString(genre.name)); });
+                          [&list](const std::string& genre) -> void { list.append(QString::fromStdString(genre)); });
 
     // update model
     _genres_string_model->setStringList(list);
     _genres_completer->setModel(_genres_string_model);
 }
 
-void BookInfoInputWidget::setAuthors(const std::shared_ptr<std::vector<bd::Author>>& authors)
+void BookInfoInputWidget::setAuthors(const std::shared_ptr<std::vector<std::string>>& authors)
 {
+    _authors = authors;
+
     // update authors autocompletion base
     QStringList list;
 
     std::ranges::for_each(*authors,
-                          [&list](const bd::Author& genre) -> void { list.append(QString::fromStdString(genre.name)); });
+                          [&list](const std::string& genre) -> void { list.append(QString::fromStdString(genre)); });
 
     // update model
     _authors_string_model->setStringList(list);
@@ -87,12 +97,26 @@ void BookInfoInputWidget::onSaveButtonClicked()
 
     auto author = _ui->le_author->text().toStdString();
 
-    auto priority = _ui->cb_priority->currentData().toInt();
-    auto avaibility = _ui->cb_priority->currentData().toInt();
-    // auto genres = _ui->le_genres->text().toStdString();
+    auto priority = _ui->cb_priority->currentText().toStdString();
 
-    emit infoSaved(
-        bd::Book{.id = -1, .title = std::move(title), .author = 1, .avaibility = avaibility, .priority = priority, .genres = {}});
+    auto avaibility = _ui->cb_avaibility->currentText().toStdString();
+
+    // genres string in "genre1,genre2,genre3" format
+    auto genres = _ui->le_genres->text().toStdString();
+
+    // split by comma, semicolon and space
+    boost::char_separator<char> separator(", ;");
+    boost::tokenizer<boost::char_separator<char>> tokenizer(genres, separator);
+
+    std::vector<std::string> separated_genres;
+
+    std::ranges::for_each(tokenizer, [&separated_genres](const auto& str) { separated_genres.push_back(str); });
+
+    emit infoSaved(bd::Book{.title = std::move(title),
+                            .author = std::move(author),
+                            .avaibility = std::move(avaibility),
+                            .priority = std::move(priority),
+                            .genres = std::move(separated_genres)});
 
     close();
 }
