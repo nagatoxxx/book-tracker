@@ -2,6 +2,7 @@
 
 #include "defs.hpp"
 
+#include <QComboBox>
 #include <QCompleter>
 #include <QStringListModel>
 #include <QWidget>
@@ -36,6 +37,8 @@ public:
     void setAvaibilities(const std::shared_ptr<std::vector<std::string>>& avaibilities);
     void setGenres(const std::shared_ptr<std::vector<std::string>>& genres);
     void setAuthors(const std::shared_ptr<std::vector<std::string>>& authors);
+
+    void setBookInfo(const bd::Book& book);
 
 signals:
     void infoSaved(const bd::Book&);

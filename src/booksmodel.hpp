@@ -34,10 +34,13 @@ public:
     [[nodiscard]] Qt::ItemFlags flags(const QModelIndex& index) const override;
     [[nodiscard]] bool setData(const QModelIndex& index, const QVariant& value, int role) override;
 
-    // sql query wrappers
+
+    [[nodiscard]] bd::Book book(int book_id) const;
     void insertBook(const bd::Book& book);
+    void updateBook(int book_id, const bd::Book& book);
     void deleteBook(std::string_view title);
-    void deleteBooks(const std::vector<std::string_view>& titles);
+    void deleteBook(int book_id);
+    void deleteBooks(const std::vector<std::string>& titles);
 
     [[nodiscard]] std::vector<std::string> genres() const;
     [[nodiscard]] std::vector<std::string> priorities() const;
@@ -46,6 +49,12 @@ public:
 
 private:
     void loadData(); // update _data with sql select query
+
+    int ensureAuthorExists(std::string_view author);
+    int ensureAvaibilityExists(std::string_view avaibility);
+    int ensurePriorityExists(std::string_view priority);
+    int ensureGenreExists(std::string_view genre);
+    void linkBookGenre(int book_id, int genre_id);
 
     QSqlDatabase _database;
     QStringList _displayed_headers;

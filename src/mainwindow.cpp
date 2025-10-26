@@ -1,13 +1,14 @@
 #include "mainwindow.hpp"
 
 #include "bookinfoinputwidget.hpp"
-#include "query.hpp"
+#include "booksmodel.hpp"
 #include "ui_mainwindow.h"
 #include "util.hpp"
 
 #include <QAction>
 #include <QContextMenuEvent>
 #include <QMenu>
+#include <QMessageBox>
 #include <QSqlError>
 #include <QSqlQuery>
 
@@ -54,23 +55,50 @@ void MainWindow::addBook()
 
 void MainWindow::removeSelectedBooks()
 {
-    // TODO check this
     const auto selection = _ui->tv_books->selectionModel()->selectedRows();
 
-    std::vector<std::string_view> titles;
+    std::vector<std::string> titles;
     titles.reserve(selection.count());
 
     // multiple rows can be selected
-    for (int i = 0; i < selection.count(); i++) {
+    for (int i = 0; i < selection.count(); ++i) {
         const auto index = selection.at(i);
-
-        titles.emplace_back(_ui->tv_books->model()->data(index).toString().toStdString());
+        titles.emplace_back(index.data().toString().toStdString());
     }
 
     _model->deleteBooks(titles);
 }
 
-void MainWindow::editBook() {}
+void MainWindow::editBook()
+{
+    const auto selection = _ui->tv_books->selectionModel()->selectedRows();
+
+    if (selection.count() != 1) {
+        QMessageBox::information(this, tr("Внимание!"), tr("Для редактирования выберите одну книгу."));
+        return;
+    }
+
+    const auto index = selection.at(0);
+    auto book_id = index.data(Qt::UserRole).toInt();
+
+    auto* widget = new BookInfoInputWidget;
+    widget->setWindowModality(Qt::WindowModal);
+    widget->setAttribute(Qt::WA_DeleteOnClose);
+    widget->setWindowFlags(Qt::Tool);
+    widget->show();
+
+    // set genres, priority, avaibility to autocompletion
+    widget->setPriorities(std::make_shared<std::vector<std::string>>(_model->priorities()));
+    widget->setAvaibilities(std::make_shared<std::vector<std::string>>(_model->avaibilities()));
+    widget->setAuthors(std::make_shared<std::vector<std::string>>(_model->authors()));
+    widget->setGenres(std::make_shared<std::vector<std::string>>(_model->genres()));
+
+    widget->setBookInfo(_model->book(book_id));
+
+    auto on_info_saved = [this, book_id](const BooksDatabase::Book& book) { _model->updateBook(book_id, book); };
+
+    QObject::connect(widget, &BookInfoInputWidget::infoSaved, this, on_info_saved);
+}
 
 void MainWindow::contextMenuEvent(QContextMenuEvent* event) /* override  */
 {
@@ -102,4 +130,5 @@ void MainWindow::makeMenu()
 
     QObject::connect(_action_remove_book, &QAction::triggered, this, &MainWindow::removeSelectedBooks);
     QObject::connect(_action_add_book, &QAction::triggered, this, &MainWindow::addBook);
+    QObject::connect(_action_edit_book, &QAction::triggered, this, &MainWindow::editBook);
 }

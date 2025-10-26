@@ -6,7 +6,7 @@
 #include <boost/tokenizer.hpp>
 
 #include <QCompleter>
-#include <qlogging.h>
+#include <QInputDialog>
 
 #include <algorithm>
 
@@ -30,6 +30,7 @@
     _authors_completer->setCaseSensitivity(Qt::CaseInsensitive);
     _authors_completer->setCompletionMode(QCompleter::PopupCompletion);
     _ui->le_author->setCompleter(_authors_completer);
+
 
     QObject::connect(_ui->pb_save, &QPushButton::clicked, this, &BookInfoInputWidget::onSaveButtonClicked);
 }
@@ -88,6 +89,35 @@ void BookInfoInputWidget::setAuthors(const std::shared_ptr<std::vector<std::stri
     // update model
     _authors_string_model->setStringList(list);
     _authors_completer->setModel(_authors_string_model);
+}
+
+void BookInfoInputWidget::setBookInfo(const bd::Book& book)
+{
+    if (_ui->cb_avaibility->count() == 0) {
+        throw std::runtime_error("avaibilities must be set before setBookInfo call");
+    }
+
+    if (_ui->cb_priority->count() == 0) {
+        throw std::runtime_error("priorities must be set before setBookInfo call");
+    }
+
+    _ui->cb_priority->setCurrentText(QString::fromStdString(book.priority));
+    _ui->cb_avaibility->setCurrentText(QString::fromStdString(book.avaibility));
+
+    _ui->le_title->setText(QString::fromStdString(book.title));
+    _ui->le_author->setText(QString::fromStdString(book.author));
+
+    if (book.genres.size() == 0) {
+        return;
+    }
+
+    std::string genres_str = book.genres[0];
+    for (auto i = 1ULL; i < book.genres.size(); ++i) {
+        genres_str += ',';
+        genres_str += book.genres[i];
+    }
+
+    _ui->le_genres->setText(QString::fromStdString(genres_str));
 }
 
 void BookInfoInputWidget::onSaveButtonClicked()

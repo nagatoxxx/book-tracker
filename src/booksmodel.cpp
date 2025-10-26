@@ -1,12 +1,15 @@
 #include "booksmodel.hpp"
 
-#include "query.hpp"
 #include "util.hpp"
+
+#include <boost/token_functions.hpp>
+#include <boost/tokenizer.hpp>
 
 #include <QSqlDatabase>
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QString>
+#include <qnamespace.h>
 
 /* explicit */ BooksModel::BooksModel(const QString& filename, QObject* parent /* = nullptr */)
 : QAbstractTableModel(parent),
@@ -42,11 +45,19 @@ BooksModel::~BooksModel() /* override */
 
 /* [[nodiscard]] */ QVariant BooksModel::data(const QModelIndex& index, int role) const /* override  */
 {
-    if (!index.isValid() || role != Qt::DisplayRole) {
+    if (!index.isValid()) {
         return {};
     }
 
-    return _data[index.row()][index.column()];
+    if (role == Qt::DisplayRole) {
+        return _data[index.row()][index.column()];
+    }
+
+    if (role == Qt::UserRole) {
+        return _ids[index.row()];
+    }
+
+    return {};
 }
 
 /* [[nodiscard]] */ QVariant BooksModel::headerData(int section, Qt::Orientation orientation, int role) const /* override  */
@@ -71,7 +82,6 @@ BooksModel::~BooksModel() /* override */
                                              int role [[maybe_unused]]) /* override  */
 {
     return false; // prevents editing of values
-                  // TODO check this
 }
 
 void BooksModel::loadData()
@@ -85,7 +95,23 @@ void BooksModel::loadData()
     QSqlQuery query(_database);
 
     // getting all the data from the tables, combining them into one table
-    auto res = query.exec(QString::fromStdString(std::string(BooksDatabase::GET_ALL)));
+    auto res = query.exec(R"(
+    SELECT 
+    Books.book_id as id,
+    Books.book_title as title,
+    Authors.author_name as author,
+    Priorities.priority_name as priority, 
+    Avaibilities.avaibility_name as avaibility, 
+    GROUP_CONCAT(Genres.genre_name) as genres
+    FROM Books
+    FULL OUTER JOIN BooksGenres on BooksGenres.book_id = Books.book_id
+    JOIN Authors on Books.book_author = Authors.author_id
+    JOIN Priorities on Books.book_priority = Priorities.priority_id
+    JOIN Avaibilities on Books.book_avaibility = Avaibilities.avaibility_id
+    LEFT JOIN Genres on BooksGenres.genre_id = Genres.genre_id
+    GROUP BY (title);
+    )");
+
 
     if (!res) {
         auto error = query.lastError();
@@ -96,58 +122,86 @@ void BooksModel::loadData()
     while (query.next()) {
         _ids.emplace_back(query.value(0).toInt());
         QVector<QVariant> row;
-        row.reserve(BooksDatabase::COLUMNS_IN_JOINED - 1);
-        for (int i = 0; i < BooksDatabase::COLUMNS_IN_JOINED - 1; ++i) {
+        row.reserve(BooksDatabase::COLUMNS_IN_JOINED);
+        for (int i = 1; i < BooksDatabase::COLUMNS_IN_JOINED; ++i) {
             row.emplace_back(query.value(i));
         }
 
         _data.emplace_back(std::move(row));
     }
 
+    qWarning() << "ids:" << _ids;
+
     endResetModel();
+}
+
+/* [[nodiscard]] */ bd::Book BooksModel::book(int book_id) const
+{
+    QSqlQuery query(_database);
+
+    query.prepare(R"(
+    SELECT 
+    Books.book_id as id,
+    Books.book_title as title,
+    Authors.author_name as author,
+    Priorities.priority_name as priority, 
+    Avaibilities.avaibility_name as avaibility, 
+    GROUP_CONCAT(Genres.genre_name) as genres
+    FROM Books
+    FULL OUTER JOIN BooksGenres on BooksGenres.book_id = Books.book_id
+    JOIN Authors on Books.book_author = Authors.author_id
+    JOIN Priorities on Books.book_priority = Priorities.priority_id
+    JOIN Avaibilities on Books.book_avaibility = Avaibilities.avaibility_id
+    LEFT JOIN Genres on BooksGenres.genre_id = Genres.genre_id
+    WHERE Books.book_id = :id
+    GROUP BY (title);
+    )");
+    query.bindValue(":id", book_id);
+
+    if (!query.exec()) {
+        auto error = query.lastError();
+        throw std::runtime_error(std::format("select query failed: {}", error.text().toStdString()));
+    }
+
+    if (!query.next()) {
+        throw std::runtime_error("cannot find book");
+    }
+
+    bd::Book book;
+    book.title = query.value(1).toString().toStdString();
+    book.author = query.value(2).toString().toStdString();
+    book.priority = query.value(3).toString().toStdString();
+    book.avaibility = query.value(4).toString().toStdString();
+
+    auto genres = query.value(5).toString().toStdString();
+    boost::tokenizer<boost::char_separator<char>> tokenizer(genres);
+    boost::char_separator<char> separator(", ;");
+
+    std::vector<std::string> separated;
+    for (const auto& genre : tokenizer) {
+        separated.push_back(genre);
+    }
+
+    book.genres = std::move(separated);
+
+    return book;
 }
 
 void BooksModel::insertBook(const bd::Book& book)
 {
-    namespace bd = BooksDatabase;
+    auto author_id = ensureAuthorExists(book.author);
+    auto avaibility_id = ensureAvaibilityExists(book.avaibility);
+    auto priority_id = ensurePriorityExists(book.priority);
 
     QSqlQuery query(_database);
 
-    // insert author if non-exists
-    query.prepare(utils::strviewToQString(bd::INSERT_AUTHOR_NE));
-    query.bindValue(":a", QString::fromStdString(book.author));
-    query.exec();
-
-    if (!query.exec()) {
-        auto error = query.lastError();
-        throw std::runtime_error(std::format("insert query failed: {}", error.text().toStdString()));
-    }
-
-    // insert avaibility if non-exists
-    query.prepare(utils::strviewToQString(bd::INSERT_AVAIBILITY_NE));
-    query.bindValue(":v", QString::fromStdString(book.avaibility));
-    query.exec();
-
-    if (!query.exec()) {
-        auto error = query.lastError();
-        throw std::runtime_error(std::format("insert query failed: {}", error.text().toStdString()));
-    }
-
-    // insert priority if non-exists
-    query.prepare(utils::strviewToQString(bd::INSERT_PRIORITY_NE));
-    query.bindValue(":p", QString::fromStdString(book.priority));
-    query.exec();
-
-    if (!query.exec()) {
-        auto error = query.lastError();
-        throw std::runtime_error(std::format("insert query failed: {}", error.text().toStdString()));
-    }
-    // insert book if non-exists
-    query.prepare(utils::strviewToQString(BooksDatabase::INSERT_BOOK));
+    query.prepare(R"(
+    INSERT INTO Books (book_title, book_author, book_avaibility, book_priority)
+    VALUES (:title, :author, :avaibility, :priority);)");
     query.bindValue(":title", QString::fromStdString(book.title));
-    query.bindValue(":author", QString::fromStdString(book.author));
-    query.bindValue(":avaibility", QString::fromStdString(book.avaibility));
-    query.bindValue(":priority", QString::fromStdString(book.priority));
+    query.bindValue(":author", author_id);
+    query.bindValue(":avaibility", avaibility_id);
+    query.bindValue(":priority", priority_id);
 
     if (!query.exec()) {
         auto error = query.lastError();
@@ -157,26 +211,8 @@ void BooksModel::insertBook(const bd::Book& book)
     auto book_id = query.lastInsertId().toInt();
 
     for (const std::string& genre : book.genres) {
-        // insert genre if non-exists
-        query.prepare(utils::strviewToQString(bd::INSERT_GENRE_NE));
-        query.bindValue(":g", QString::fromStdString(genre));
-        query.exec();
-
-        // found genre id
-        query.prepare("SELECT genre_id FROM Genres WHERE genre_name = :g LIMIT 1;");
-        query.bindValue(":g", QString::fromStdString(genre));
-        query.exec();
-
-        qint64 genre_id = -1;
-        if (query.next()) {
-            genre_id = query.value(0).toLongLong();
-        }
-
-        // create reference if non-exists
-        query.prepare(utils::strviewToQString(bd::INSERT_BOOK_GENRE_NE));
-        query.bindValue(":b", book_id);
-        query.bindValue(":g", genre_id);
-        query.exec();
+        int genre_id = ensureGenreExists(genre);
+        linkBookGenre(book_id, genre_id);
     }
 
     loadData();
@@ -184,13 +220,52 @@ void BooksModel::insertBook(const bd::Book& book)
     qDebug() << "book" << book.title << "inserted";
 }
 
-void BooksModel::deleteBook(std::string_view title)
+void BooksModel::updateBook(int book_id, const bd::Book& book)
 {
-    namespace bd = BooksDatabase;
+    int author_id = ensureAuthorExists(book.author);
+    int availability_id = ensureAvaibilityExists(book.avaibility);
+    int priority_id = ensurePriorityExists(book.priority);
 
     QSqlQuery query(_database);
+    query.prepare(R"(UPDATE Books
+    SET
+        book_title = :title,
+        book_author = :author,
+        book_avaibility = :avaibility,
+        book_priority = :priority
+    WHERE book_id = :id;)");
+    query.bindValue(":id", book_id);
+    query.bindValue(":title", QString::fromStdString(book.title));
+    query.bindValue(":author", author_id);
+    query.bindValue(":avaibility", availability_id);
+    query.bindValue(":priority", priority_id);
 
-    query.prepare(utils::strviewToQString(bd::DELETE_BOOK_BY_TITLE));
+    if (!query.exec()) {
+        auto error = query.lastError();
+        throw std::runtime_error(std::format("update book failed: {}", error.text().toStdString()));
+    }
+
+    query.prepare("DELETE FROM BookGenres WHERE book_id = :b;");
+    query.bindValue(":b", book_id);
+    query.exec();
+
+    for (const std::string& genre : book.genres) {
+        int genreId = ensureGenreExists(genre);
+        linkBookGenre(book_id, genreId);
+    }
+
+    loadData();
+
+    qDebug() << "book updated:" << QString::fromStdString(book.title);
+}
+
+void BooksModel::deleteBook(std::string_view title)
+{
+    QSqlQuery query(_database);
+
+    query.prepare(R"(
+    DELETE FROM Books WHERE book_title = :title;
+    )");
     query.bindValue(":title", utils::strviewToQString(title));
 
     if (!query.exec()) {
@@ -203,18 +278,43 @@ void BooksModel::deleteBook(std::string_view title)
     loadData();
 }
 
-void BooksModel::deleteBooks(const std::vector<std::string_view>& titles)
+void BooksModel::deleteBooks(const std::vector<std::string>& titles)
 {
     for (const auto& title : titles) {
         deleteBook(title);
     }
 }
 
+void BooksModel::deleteBook(int book_id)
+{
+    QSqlQuery query(_database);
+
+    query.prepare(R"(
+    DELETE FROM Books WHERE book_id = :id;
+    )");
+    query.bindValue(":id", book_id);
+
+    if (!query.exec()) {
+        auto error = query.lastError();
+        throw std::runtime_error(std::format("delete book query failed: {}", error.text().toStdString()));
+    }
+
+    qDebug() << "book with id" << book_id << "deleted";
+
+    loadData();
+}
+
+
 /* [[nodiscard]] */ std::vector<std::string> BooksModel::genres() const
 {
     QSqlQuery query(_database);
 
-    auto res = query.exec(utils::strviewToQString(bd::GET_GENRES));
+    auto res = query.exec(R"(
+    SELECT
+    Genres.genre_id as id,
+    Genres.genre_name as name
+    FROM Genres;
+    )");
 
     if (!res) {
         auto error = query.lastError();
@@ -236,7 +336,13 @@ void BooksModel::deleteBooks(const std::vector<std::string_view>& titles)
 {
     QSqlQuery query(_database);
 
-    auto res = query.exec(utils::strviewToQString(bd::GET_PRIORITIES));
+    auto res = query.exec(R"(
+    SELECT 
+    Priorities.priority_id as id,
+    Priorities.priority_name as name,
+    Priorities.priority_value as value
+    FROM Priorities;
+    )");
 
     if (!res) {
         auto error = query.lastError();
@@ -258,7 +364,12 @@ void BooksModel::deleteBooks(const std::vector<std::string_view>& titles)
 {
     QSqlQuery query(_database);
 
-    auto res = query.exec(utils::strviewToQString(bd::GET_AVAIBILITIES));
+    auto res = query.exec(R"(
+    SELECT
+    Avaibilities.avaibility_id as id,
+    Avaibilities.avaibility_name as name
+    FROM Avaibilities;
+    )");
 
     if (!res) {
         auto error = query.lastError();
@@ -280,7 +391,12 @@ void BooksModel::deleteBooks(const std::vector<std::string_view>& titles)
 {
     QSqlQuery query(_database);
 
-    auto res = query.exec(utils::strviewToQString(bd::GET_AUTHORS));
+    auto res = query.exec(R"(
+    SELECT 
+    Authors.author_id as id,
+    Authors.author_name as name
+    FROM Authors;
+    )");
 
     if (!res) {
         auto error = query.lastError();
@@ -296,4 +412,119 @@ void BooksModel::deleteBooks(const std::vector<std::string_view>& titles)
     }
 
     return authors;
+}
+
+int BooksModel::ensureAuthorExists(std::string_view author)
+{
+    QSqlQuery query(_database);
+
+    // insert author if non-exists
+    query.prepare(R"(
+    INSERT INTO Authors (author_name) SELECT :a WHERE NOT EXISTS (SELECT 1 FROM Authors WHERE author_name = :a);
+    )");
+    query.bindValue(":a", utils::strviewToQString(author));
+
+    if (!query.exec()) {
+        auto error = query.lastError();
+        throw std::runtime_error(std::format("insert query failed: {}", error.text().toStdString()));
+    }
+
+    query.prepare("SELECT author_id FROM Authors WHERE author_name = :a LIMIT 1;");
+    query.bindValue(":a", utils::strviewToQString(author));
+    query.exec();
+
+    if (query.next()) {
+        return query.value(0).toInt();
+    }
+
+    throw std::runtime_error("failed to ensure author exists");
+}
+
+int BooksModel::ensureAvaibilityExists(std::string_view avaibility)
+{
+    QSqlQuery query(_database);
+
+    // insert avaibility if non-exists
+    query.prepare(R"(
+    INSERT INTO Avaibilities (avaibility_name) SELECT :v WHERE NOT EXISTS (SELECT 1 FROM Avaibilities WHERE avaibility_name = :v);
+    )");
+    query.bindValue(":v", utils::strviewToQString(avaibility));
+
+    if (!query.exec()) {
+        auto error = query.lastError();
+        throw std::runtime_error(std::format("insert query failed: {}", error.text().toStdString()));
+    }
+
+    query.prepare("SELECT avaibility_id FROM Avaibilities WHERE avaibility_name = :v LIMIT 1;");
+    query.bindValue(":v", utils::strviewToQString(avaibility));
+    query.exec();
+
+    if (query.next()) {
+        return query.value(0).toInt();
+    }
+
+    throw std::runtime_error("failed to ensure avaibility exists");
+}
+
+int BooksModel::ensurePriorityExists(std::string_view priority)
+{
+    QSqlQuery query(_database);
+
+    // insert priority if non-exists
+    query.prepare(R"(
+    INSERT INTO Priorities (priority_name) SELECT :p WHERE NOT EXISTS (SELECT 1 FROM Priorities WHERE priority_name = :p);
+    )");
+    query.bindValue(":p", utils::strviewToQString(priority));
+
+    if (!query.exec()) {
+        auto error = query.lastError();
+        throw std::runtime_error(std::format("insert query failed: {}", error.text().toStdString()));
+    }
+
+    query.prepare("SELECT priority_id FROM Priorities WHERE priority_name = :p LIMIT 1;");
+    query.bindValue(":p", utils::strviewToQString(priority));
+    query.exec();
+
+    if (query.next()) {
+        return query.value(0).toInt();
+    }
+
+    throw std::runtime_error("failed to ensure priority exists");
+}
+
+int BooksModel::ensureGenreExists(std::string_view genre)
+{
+    QSqlQuery query(_database);
+
+    query.prepare(R"(
+    INSERT INTO Genres (genre_name) SELECT :g WHERE NOT EXISTS (SELECT 1 FROM Genres WHERE genre_name = :g);
+    )");
+    query.bindValue(":g", utils::strviewToQString(genre));
+    query.exec();
+
+    query.prepare("SELECT genre_id FROM Genres WHERE genre_name = :g LIMIT 1;");
+    query.bindValue(":g", utils::strviewToQString(genre));
+    query.exec();
+
+    if (query.next()) {
+        return query.value(0).toInt();
+    }
+
+    throw std::runtime_error("failed to ensure genre exists");
+}
+
+void BooksModel::linkBookGenre(int book_id, int genre_id)
+{
+    QSqlQuery query(_database);
+
+    query.prepare(R"(
+    INSERT INTO BooksGenres (book_id, genre_id)
+    SELECT :b, :g
+    WHERE NOT EXISTS (
+        SELECT 1 FROM BooksGenres WHERE book_id = :b AND genre_id = :g
+    );
+    )");
+    query.bindValue(":b", book_id);
+    query.bindValue(":g", genre_id);
+    query.exec();
 }
