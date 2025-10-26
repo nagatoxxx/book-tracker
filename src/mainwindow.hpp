@@ -28,8 +28,19 @@ public:
 
 private slots:
     void addBook();
+    void removeSelectedBooks();
+    void editBook();
+
+    void contextMenuEvent(QContextMenuEvent* event) override;
 
 private:
+    void makeMenu();
+
     std::unique_ptr<Ui::MainWindow> _ui{nullptr};
     BooksModel* _model{nullptr};
+
+    QMenu* _popup_menu{nullptr};
+    QAction* _action_remove_book{nullptr};
+    QAction* _action_add_book{nullptr};
+    QAction* _action_edit_book{nullptr};
 };

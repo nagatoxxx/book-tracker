@@ -15,6 +15,8 @@ class BooksModel : public QAbstractTableModel
     Q_OBJECT
 
 public:
+    static constexpr auto BOOK_TITLE_COLUMN{1};
+
     explicit BooksModel(const QString& filename, QObject* parent = nullptr);
 
     BooksModel(const BooksModel&) = delete;
@@ -34,6 +36,8 @@ public:
 
     // sql query wrappers
     void insertBook(const bd::Book& book);
+    void deleteBook(std::string_view title);
+    void deleteBooks(const std::vector<std::string_view>& titles);
 
     [[nodiscard]] std::vector<std::string> genres() const;
     [[nodiscard]] std::vector<std::string> priorities() const;

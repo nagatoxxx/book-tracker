@@ -181,7 +181,33 @@ void BooksModel::insertBook(const bd::Book& book)
 
     loadData();
 
-    qWarning() << "book inserted";
+    qDebug() << "book" << book.title << "inserted";
+}
+
+void BooksModel::deleteBook(std::string_view title)
+{
+    namespace bd = BooksDatabase;
+
+    QSqlQuery query(_database);
+
+    query.prepare(utils::strviewToQString(bd::DELETE_BOOK_BY_TITLE));
+    query.bindValue(":title", utils::strviewToQString(title));
+
+    if (!query.exec()) {
+        auto error = query.lastError();
+        throw std::runtime_error(std::format("delete book query failed: {}", error.text().toStdString()));
+    }
+
+    qDebug() << "book" << title << "deleted";
+
+    loadData();
+}
+
+void BooksModel::deleteBooks(const std::vector<std::string_view>& titles)
+{
+    for (const auto& title : titles) {
+        deleteBook(title);
+    }
 }
 
 /* [[nodiscard]] */ std::vector<std::string> BooksModel::genres() const

@@ -88,4 +88,13 @@ VALUES (:title,
 (SELECT avaibility_id FROM Avaibilities where avaibility_name = :avaibility),
 (SELECT priority_id FROM Priorities where priority_name = :priority));
 )";
+
+//#===============--------------- DELETE FROM TABLES ---------------===============#//
+inline constexpr std::string_view DELETE_BOOK_GENRES_BY_TITLE = R"(
+DELETE FROM BooksGenres WHERE book_id = (SELECT book_id FROM Books WHERE book_title = :title LIMIT 1);
+)";
+
+inline constexpr std::string_view DELETE_BOOK_BY_TITLE = R"(
+DELETE FROM Books WHERE book_title = :title;
+)";
 } // namespace BooksDatabase
