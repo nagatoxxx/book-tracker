@@ -39,7 +39,7 @@ public:
     void insertBook(const bd::Book& book);
     void updateBook(int book_id, const bd::Book& book);
     void deleteBook(std::string_view title);
-    void deleteBook(int book_id);
+    // void deleteBook(int book_id);
     void deleteBooks(const std::vector<std::string>& titles);
 
     [[nodiscard]] std::vector<std::string> genres() const;

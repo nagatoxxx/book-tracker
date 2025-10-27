@@ -255,8 +255,10 @@ void BooksModel::updateBook(int book_id, const bd::Book& book)
     }
 
     for (const std::string& genre : book.genres) {
-        int genreId = ensureGenreExists(genre);
-        linkBookGenre(book_id, genreId);
+        qDebug() << "genre:" << genre.c_str();
+        int genre_id = ensureGenreExists(genre);
+        qDebug() << "genre id" << genre_id;
+        linkBookGenre(book_id, genre_id);
     }
 
     loadData();
@@ -268,6 +270,14 @@ void BooksModel::deleteBook(std::string_view title)
 {
     QSqlQuery query(_database);
 
+    query.prepare(R"(DELETE FROM BooksGenres WHERE book_id = (SELECT book_id FROM Books WHERE book_title=:title);)");
+    query.bindValue(":title", utils::strviewToQString(title));
+
+    if (!query.exec()) {
+        auto error = query.lastError();
+        throw std::runtime_error(std::format("delete book genres query failed: {}", error.text().toStdString()));
+    }
+
     query.prepare(R"(
     DELETE FROM Books WHERE book_title = :title;
     )");
@@ -277,6 +287,7 @@ void BooksModel::deleteBook(std::string_view title)
         auto error = query.lastError();
         throw std::runtime_error(std::format("delete book query failed: {}", error.text().toStdString()));
     }
+
 
     qDebug() << "book" << title << "deleted";
 
@@ -290,25 +301,24 @@ void BooksModel::deleteBooks(const std::vector<std::string>& titles)
     }
 }
 
-void BooksModel::deleteBook(int book_id)
-{
-    QSqlQuery query(_database);
-
-    query.prepare(R"(
-    DELETE FROM Books WHERE book_id = :id;
-    )");
-    query.bindValue(":id", book_id);
-
-    if (!query.exec()) {
-        auto error = query.lastError();
-        throw std::runtime_error(std::format("delete book query failed: {}", error.text().toStdString()));
-    }
-
-    qDebug() << "book with id" << book_id << "deleted";
-
-    loadData();
-}
-
+// void BooksModel::deleteBook(int book_id)
+// {
+//     QSqlQuery query(_database);
+//
+//     query.prepare(R"(
+//     DELETE FROM Books WHERE book_id = :id;
+//     )");
+//     query.bindValue(":id", book_id);
+//
+//     if (!query.exec()) {
+//         auto error = query.lastError();
+//         throw std::runtime_error(std::format("delete book query failed: {}", error.text().toStdString()));
+//     }
+//
+//     qDebug() << "book with id" << book_id << "deleted";
+//
+//     loadData();
+// }
 
 /* [[nodiscard]] */ std::vector<std::string> BooksModel::genres() const
 {
