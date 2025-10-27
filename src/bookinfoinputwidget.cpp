@@ -7,6 +7,7 @@
 
 #include <QCompleter>
 #include <QInputDialog>
+#include <qobject.h>
 
 #include <algorithm>
 
@@ -112,10 +113,14 @@ void BookInfoInputWidget::setBookInfo(const bd::Book& book)
     }
 
     std::string genres_str = book.genres[0];
+    qDebug() << "initially" << genres_str.c_str();
     for (auto i = 1ULL; i < book.genres.size(); ++i) {
+        qDebug() << i << "elem:" << book.genres[i].c_str();
         genres_str += ',';
         genres_str += book.genres[i];
     }
+
+    qDebug() << genres_str.c_str();
 
     _ui->le_genres->setText(QString::fromStdString(genres_str));
 }
@@ -141,6 +146,9 @@ void BookInfoInputWidget::onSaveButtonClicked()
     std::vector<std::string> separated_genres;
 
     std::ranges::for_each(tokenizer, [&separated_genres](const auto& str) { separated_genres.push_back(str); });
+
+    qDebug() << "book saved" << title.c_str() << author.c_str() << avaibility.c_str() << priority.c_str()
+             << genres.c_str();
 
     emit infoSaved(bd::Book{.title = std::move(title),
                             .author = std::move(author),

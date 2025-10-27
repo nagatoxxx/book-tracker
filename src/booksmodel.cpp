@@ -174,15 +174,16 @@ void BooksModel::loadData()
     book.avaibility = query.value(4).toString().toStdString();
 
     auto genres = query.value(5).toString().toStdString();
-    boost::tokenizer<boost::char_separator<char>> tokenizer(genres);
+    qDebug() << "sql genres:" << genres.c_str();
     boost::char_separator<char> separator(", ;");
+    boost::tokenizer<boost::char_separator<char>> tokenizer(genres, separator);
 
-    std::vector<std::string> separated;
+    std::vector<std::string> separated_genres;
     for (const auto& genre : tokenizer) {
-        separated.push_back(genre);
+        separated_genres.push_back(genre);
     }
 
-    book.genres = std::move(separated);
+    book.genres = std::move(separated_genres);
 
     return book;
 }
@@ -245,9 +246,13 @@ void BooksModel::updateBook(int book_id, const bd::Book& book)
         throw std::runtime_error(std::format("update book failed: {}", error.text().toStdString()));
     }
 
-    query.prepare("DELETE FROM BookGenres WHERE book_id = :b;");
+    query.prepare("DELETE FROM BooksGenres WHERE book_id = :b;");
     query.bindValue(":b", book_id);
-    query.exec();
+
+    if (!query.exec()) {
+        auto error = query.lastError();
+        throw std::runtime_error(std::format("delete query failed: {}", error.text().toStdString()));
+    }
 
     for (const std::string& genre : book.genres) {
         int genreId = ensureGenreExists(genre);
