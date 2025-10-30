@@ -19,11 +19,11 @@ set(PROJECT_SRC
     src/mainwindow.ui
     src/booksmodel.hpp
     src/booksmodel.cpp
-    src/vieweventfilter.hpp
-    src/vieweventfilter.cpp
     src/bookinfoinputwidget.ui
     src/bookinfoinputwidget.hpp
     src/bookinfoinputwidget.cpp
+    src/booksproxymodel.hpp
+    src/booksproxymodel.cpp
 
     src/util.hpp
 )

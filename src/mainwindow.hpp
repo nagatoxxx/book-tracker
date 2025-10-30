@@ -1,4 +1,5 @@
 #include "booksmodel.hpp"
+#include "booksproxymodel.hpp"
 
 #include <QMainWindow>
 #include <QSqlDatabase>
@@ -38,6 +39,7 @@ private:
 
     std::unique_ptr<Ui::MainWindow> _ui{nullptr};
     BooksModel* _model{nullptr};
+    BooksProxyModel* _proxy_model{nullptr};
 
     QMenu* _popup_menu{nullptr};
     QAction* _action_remove_book{nullptr};

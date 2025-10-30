@@ -11,21 +11,24 @@
 #include <QMessageBox>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <qregularexpression.h>
 
 /* explicit  */ MainWindow::MainWindow(QWidget* parent /* = nullptr */)
 : QMainWindow(parent),
   _ui(std::make_unique<Ui::MainWindow>()),
   _model(new BooksModel(utils::strviewToQString(BooksDatabase::FILENAME))),
+  _proxy_model(new BooksProxyModel),
   _popup_menu(new QMenu(this))
 {
     _ui->setupUi(this);
 
     makeMenu();
 
+    _proxy_model->setSourceModel(_model);
+    _proxy_model->setFilterCaseSensitivity(Qt::CaseInsensitive);
+
     // table view config
-    _ui->tv_books->setModel(_model);
-    // _ui->tv_books->installEventFilter(new TableViewEventFilter(_ui->tv_books, _ui->tv_books)); // to process widget resizes
-    // _ui->tv_books->horizontalHeader()->setSectionResizeMode(QHeaderView::Fixed); // prevents columns size changes
+    _ui->tv_books->setModel(_proxy_model);
     _ui->tv_books->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows); // select rows, not cells
     _ui->tv_books->setEditTriggers(QTableView::NoEditTriggers);
 
