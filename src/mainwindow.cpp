@@ -33,6 +33,16 @@
     _ui->tv_books->setEditTriggers(QTableView::NoEditTriggers);
 
     setMinimumSize(800, 600);
+
+    QObject::connect(_ui->pb_search,
+                     &QPushButton::clicked,
+                     this,
+                     [this]()
+                     {
+                         // TODO split input string into tokens and insert \* between tokens
+                         const auto regex = QString("%1").arg(_ui->le_search->text());
+                         _proxy_model->setFilterRegularExpression(regex);
+                     });
 }
 
 MainWindow::~MainWindow() /* override */ = default;
@@ -111,7 +121,7 @@ void MainWindow::contextMenuEvent(QContextMenuEvent* event) /* override  */
     _action_remove_book->setEnabled(false);
 
     if (widget == _ui->tv_books->viewport()) {
-        // enable "remove" only if selection is not empty
+        // enable "remove" only if there are selected rows
         if (_ui->tv_books->selectionModel()->selectedRows().count() != 0) {
             _action_remove_book->setEnabled(true);
         }

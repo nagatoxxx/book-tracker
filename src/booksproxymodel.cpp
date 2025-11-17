@@ -4,27 +4,25 @@
 
 BooksProxyModel::~BooksProxyModel() /* override  */ = default;
 
-/* [[nodiscard]] */ bool BooksProxyModel::filterAcceptsRow(int source_row, const QModelIndex& source_parent) const /* override  */
+/* [[nodiscard]] */ bool BooksProxyModel::filterAcceptsRow(int source_row, const QModelIndex& source_idx) const /* override  */
 {
-    // TODO доделать
     qDebug() << "filterAcceptsRow";
 
     // concatenation of all columns values
     QString comp_string;
 
-    auto columns = sourceModel()->columnCount();
+    const auto columns = sourceModel()->columnCount();
     for (int i = 0; i < columns; ++i) {
         comp_string += ' ';
-        comp_string += sourceModel()->index(source_row, i, source_parent).data().toString();
+        comp_string += sourceModel()->index(source_row, i, source_idx).data().toString();
     }
 
-    auto regex = filterRegularExpression();
+    const auto regex = filterRegularExpression();
 
     qDebug() << "regex:" << regex;
 
-    auto match = regex.match(comp_string);
+    const auto match = regex.match(comp_string);
+    const auto has_match = match.hasMatch();
 
-    qDebug() << "is match:" << match.hasMatch();
-
-    return true;
+    return has_match;
 }
