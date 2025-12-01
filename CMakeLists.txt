@@ -14,16 +14,18 @@ find_package(Qt6 REQUIRED COMPONENTS Widgets Core Sql)
 
 set(PROJECT_SRC
     src/main.cpp
-
     src/mainwindow.hpp
     src/mainwindow.cpp
     src/mainwindow.ui
+    src/booksmodel.hpp
+    src/booksmodel.cpp
+    src/bookinfoinputwidget.ui
+    src/bookinfoinputwidget.hpp
+    src/bookinfoinputwidget.cpp
+    src/booksproxymodel.hpp
+    src/booksproxymodel.cpp
 
-    src/editablemodel.hpp
-    src/editablemodel.cpp
-
-    src/vieweventfilter.hpp
-    src/vieweventfilter.cpp
+    src/util.hpp
 )
 
 add_executable(books ${PROJECT_SRC})

@@ -1,0 +1,60 @@
+#pragma once
+
+#include "defs.hpp"
+
+#include <QComboBox>
+#include <QCompleter>
+#include <QStringListModel>
+#include <QWidget>
+
+#include <memory>
+
+QT_BEGIN_NAMESPACE
+namespace Ui
+{
+class BookInfoInputWidget;
+};
+QT_END_NAMESPACE
+
+namespace bd = BooksDatabase;
+
+class BookInfoInputWidget : public QWidget
+{
+    Q_OBJECT
+
+public:
+    explicit BookInfoInputWidget(QWidget* parent = nullptr);
+
+    BookInfoInputWidget(const BookInfoInputWidget&) = delete;
+    BookInfoInputWidget(BookInfoInputWidget&&) = delete;
+
+    BookInfoInputWidget& operator=(const BookInfoInputWidget&) = delete;
+    BookInfoInputWidget& operator=(BookInfoInputWidget&&) = delete;
+
+    ~BookInfoInputWidget() override;
+
+    void setPriorities(const std::shared_ptr<std::vector<std::string>>& priorities);
+    void setAvaibilities(const std::shared_ptr<std::vector<std::string>>& avaibilities);
+    void setGenres(const std::shared_ptr<std::vector<std::string>>& genres);
+    void setAuthors(const std::shared_ptr<std::vector<std::string>>& authors);
+
+    void setBookInfo(const bd::Book& book);
+
+signals:
+    void infoSaved(const bd::Book&);
+
+private slots:
+    void onSaveButtonClicked();
+
+private:
+    std::unique_ptr<Ui::BookInfoInputWidget> _ui{nullptr};
+
+    std::shared_ptr<std::vector<std::string>> _authors{nullptr};
+    std::shared_ptr<std::vector<std::string>> _genres{nullptr};
+
+    QStringListModel* _genres_string_model{nullptr}; // model to keep genres names
+    QCompleter* _genres_completer{nullptr};
+
+    QStringListModel* _authors_string_model{nullptr};
+    QCompleter* _authors_completer{nullptr};
+};

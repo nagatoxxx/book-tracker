@@ -1,4 +1,9 @@
+#include "booksmodel.hpp"
+#include "booksproxymodel.hpp"
+
 #include <QMainWindow>
+#include <QSqlDatabase>
+#include <QSqlTableModel>
 
 #include <memory>
 
@@ -22,6 +27,22 @@ public:
 
     ~MainWindow() override;
 
+private slots:
+    void addBook();
+    void removeSelectedBooks();
+    void editBook();
+
+    void contextMenuEvent(QContextMenuEvent* event) override;
+
 private:
-    std::unique_ptr<Ui::MainWindow> _ui;
+    void makeMenu();
+
+    std::unique_ptr<Ui::MainWindow> _ui{nullptr};
+    BooksModel* _model{nullptr};
+    BooksProxyModel* _proxy_model{nullptr};
+
+    QMenu* _popup_menu{nullptr};
+    QAction* _action_remove_book{nullptr};
+    QAction* _action_add_book{nullptr};
+    QAction* _action_edit_book{nullptr};
 };

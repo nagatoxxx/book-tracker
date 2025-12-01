@@ -1,4 +1,4 @@
 build
 .clangd
-compile_commangs.json
+compile_commands.json
 .cache
